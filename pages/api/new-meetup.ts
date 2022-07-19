@@ -4,7 +4,7 @@ import { MongoClient } from "mongodb";
 
 async function handler(req: any, res: any, next: any) {
   if (req.method === "POST") {
-    const data = JSON.parse(req.body);
+    const data = req.body;
 
     // const { title, image, address, description } = data;
 
