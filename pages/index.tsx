@@ -33,6 +33,7 @@ export async function getStaticProps() {
     props: {
       meetups: dummy_meetup_list,
     },
+    revalidate: 10,
   };
 }
 
