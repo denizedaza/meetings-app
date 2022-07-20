@@ -1,4 +1,7 @@
+import { MongoClient } from "mongodb";
+
 import MeetupList from "../components/meetups/MeetupList";
+require("dotenv").config();
 
 const dummy_meetup_list = [
   {
@@ -26,12 +29,28 @@ function HomePage(props: any) {
     </>
   );
 }
+console.log(process.env.MONGO_USER, process.env.MONGO_PW);
 
 export async function getStaticProps() {
-  // fetch data from an API
+  const client = await MongoClient.connect(
+    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@cluster0.9ej37.mongodb.net/meetupsapp?retryWrites=true&w=majority`
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection.find().toArray();
+
+  client.close();
+
   return {
     props: {
-      meetups: dummy_meetup_list,
+      meetups: meetups.map((meetup) => ({
+        title: meetup.title,
+        address: meetup.address,
+        image: meetup.image,
+        id: meetup._id.toString(),
+      })),
     },
     revalidate: 36000,
   };
