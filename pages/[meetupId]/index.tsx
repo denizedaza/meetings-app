@@ -1,47 +1,66 @@
+import { MongoClient, ObjectId } from "mongodb";
 import MeetupDetail from "../../components/meetups/MeetupDetail";
 
-function MeetupDetails() {
+function MeetupDetails(props: any) {
+  const { image, title, address, description } = props.meetupData;
+
   return (
     <MeetupDetail
-      image="https://cdn.audleytravel.com/700/499/79/15982680-busan-port.jpg"
-      title="Meetup Details"
-      address="The address of the Meetup"
-      description="First meetup!"
+      image={image}
+      title={title}
+      address={address}
+      description={description}
     />
   );
 }
 
 export async function getStaticPaths() {
+  const client = await MongoClient.connect(
+    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@cluster0.9ej37.mongodb.net/meetupsapp?retryWrites=true&w=majority`
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection
+    .find({}, { projection: { _id: 1 } })
+    .toArray();
+
+  client.close();
+
   return {
     fallback: false,
-    paths: [
-      {
-        params: {
-          meetupId: "1",
-        },
-      },
-      {
-        params: {
-          meetupId: "2",
-        },
-      },
-    ],
+    paths: meetups.map((meetup) => ({
+      params: { meetupId: meetup._id.toString() },
+    })),
   };
 }
 
 export async function getStaticProps(context: any) {
   // fetch data for single meetup
   const meetupId = context.params.meetupId;
-  console.log(meetupId);
+
+  const client = await MongoClient.connect(
+    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PW}@cluster0.9ej37.mongodb.net/meetupsapp?retryWrites=true&w=majority`
+  );
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const selectedMeetup = await meetupsCollection.findOne({
+    _id: new ObjectId(meetupId),
+  });
+
+  client.close();
 
   return {
     props: {
       meetupData: {
-        image:
-          "https://cdn.audleytravel.com/700/499/79/15982680-busan-port.jpg",
-        id: "1",
-        title: "Meetup Details",
-        description: "First meetup!",
+        id: selectedMeetup!._id.toString(),
+        title: selectedMeetup!.title,
+        address: selectedMeetup!.address,
+        image: selectedMeetup!.image,
+        description: selectedMeetup!.description,
       },
     },
   };
